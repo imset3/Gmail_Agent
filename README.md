@@ -14,8 +14,9 @@ python3 start.py
 
 ```bash
 python3 start.py --dummy
-python3 start.py --review-gmail --limit 20
-python3 start.py --gmail --limit 20
+python3 start.py --dummy --llm ollama
+python3 start.py --review-gmail --limit 20 --llm openai
+python3 start.py --gmail --limit 20 --llm auto
 python3 start.py --auth
 ```
 
@@ -65,7 +66,21 @@ python main.py
 
 ## LLM 설정
 
-설정이 없으면 규칙 기반 fallback으로 실행됩니다.
+실행할 때 LLM 방식을 선택할 수 있습니다.
+
+```bash
+python3 start.py --dummy --llm auto
+python3 start.py --dummy --llm openai
+python3 start.py --dummy --llm ollama
+python3 start.py --dummy --llm rules
+```
+
+- `auto`: OpenAI 키가 있으면 OpenAI를 우선 사용하고, 없으면 로컬 Ollama를 감지합니다. 둘 다 실패하면 규칙 기반 fallback으로 실행됩니다.
+- `openai`: 현재 환경에 연결된 OpenAI API를 우선 사용합니다.
+- `ollama`: 로컬 Ollama 서버를 사용합니다.
+- `rules`: 외부 LLM 없이 규칙 기반으로만 실행합니다.
+
+메뉴 실행인 `python3 start.py`에서는 현재 OpenAI/Ollama 감지 상태를 보여준 뒤 선택할 수 있습니다.
 
 OpenAI:
 
@@ -81,6 +96,8 @@ Ollama:
 export LLM_PROVIDER=ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 export OLLAMA_MODEL=llama3.1
+ollama serve
+ollama pull llama3.1
 ```
 
 ## Gmail API
@@ -97,14 +114,14 @@ Gmail API는 두 가지 방식으로 사용할 수 있습니다.
 ```bash
 pip install -r requirements.txt
 python main.py auth-gmail
-python main.py review-gmail --limit 20 --interactive --report
-python main.py run --source gmail --limit 20 --interactive --report
+python main.py review-gmail --limit 20 --llm auto --interactive --report
+python main.py run --source gmail --limit 20 --llm openai --interactive --report
 ```
 
 가장 안전한 실제 Gmail 시연은 아래 명령입니다.
 
 ```bash
-python3 start.py --review-gmail --limit 20
+python3 start.py --review-gmail --limit 20 --llm auto
 ```
 
 ## 제출 문서

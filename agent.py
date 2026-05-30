@@ -108,12 +108,13 @@ class LLMProvider:
 class OpenAIProvider(LLMProvider):
     name = "openai"
 
-    def __init__(self) -> None:
+    def __init__(self, force: bool = False) -> None:
+        self.force = force
         self.api_key = os.getenv("OPENAI_API_KEY", "")
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     def is_available(self) -> bool:
-        return bool(self.api_key)
+        return self.force or bool(self.api_key)
 
     async def analyze(self, email_item: dict[str, Any], rule_hint: dict[str, Any]) -> dict[str, Any]:
         return await asyncio.to_thread(self._analyze_sync, email_item, rule_hint)
@@ -150,12 +151,20 @@ class OpenAIProvider(LLMProvider):
 class OllamaProvider(LLMProvider):
     name = "ollama"
 
-    def __init__(self) -> None:
+    def __init__(self, force: bool = False) -> None:
+        self.force = force
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.model = os.getenv("OLLAMA_MODEL", "llama3.1")
 
     def is_available(self) -> bool:
-        return os.getenv("LLM_PROVIDER", "").lower() == "ollama" or bool(os.getenv("OLLAMA_MODEL"))
+        return self.force or os.getenv("LLM_PROVIDER", "").lower() == "ollama" or self.server_is_running()
+
+    def server_is_running(self) -> bool:
+        try:
+            with urllib.request.urlopen(f"{self.base_url.rstrip('/')}/api/tags", timeout=0.5):
+                return True
+        except OSError:
+            return False
 
     async def analyze(self, email_item: dict[str, Any], rule_hint: dict[str, Any]) -> dict[str, Any]:
         return await asyncio.to_thread(self._analyze_sync, email_item, rule_hint)
@@ -180,16 +189,19 @@ class OllamaProvider(LLMProvider):
 
 
 class LLMRouter:
-    def __init__(self) -> None:
-        provider_name = os.getenv("LLM_PROVIDER", "").lower()
+    def __init__(self, provider_name: str | None = None) -> None:
+        provider_name = (provider_name or os.getenv("LLM_PROVIDER", "auto")).lower()
         ordered: list[LLMProvider]
-        if provider_name == "ollama":
-            ordered = [OllamaProvider(), OpenAIProvider()]
+        if provider_name == "rules":
+            ordered = []
+        elif provider_name == "ollama":
+            ordered = [OllamaProvider(force=True)]
         elif provider_name == "openai":
-            ordered = [OpenAIProvider(), OllamaProvider()]
+            ordered = [OpenAIProvider(force=True)]
         else:
             ordered = [OpenAIProvider(), OllamaProvider()]
         self.providers = ordered
+        self.requested_provider = provider_name
         self.last_provider = "rules"
 
     async def analyze(self, email_item: dict[str, Any], rule_hint: dict[str, Any]) -> dict[str, Any]:
@@ -204,6 +216,13 @@ class LLMRouter:
                 continue
         self.last_provider = "rules"
         return rule_hint
+
+
+def llm_status_summary() -> str:
+    openai_status = "사용 가능" if os.getenv("OPENAI_API_KEY") else "키 없음"
+    ollama = OllamaProvider()
+    ollama_status = f"감지됨 ({ollama.model})" if ollama.server_is_running() else "미감지"
+    return f"OpenAI: {openai_status} | Ollama: {ollama_status}"
 
 
 def make_llm_prompt(email_item: dict[str, Any], rule_hint: dict[str, Any]) -> str:
@@ -735,7 +754,8 @@ def summarize_body(body: str) -> str:
 async def run_pipeline(args: argparse.Namespace) -> list[AgentResult]:
     ensure_runtime_files()
     fetcher = MailFetchAgent(args.source, args.limit)
-    classifier = ClassificationAgent(LLMRouter())
+    llm_choice = getattr(args, "llm", "auto")
+    classifier = ClassificationAgent(LLMRouter(llm_choice))
     spam_agent = SpamAgent()
     schedule_agent = ScheduleAgent()
     reply_agent = ReplyAgent(args.source)
@@ -744,6 +764,8 @@ async def run_pipeline(args: argparse.Namespace) -> list[AgentResult]:
     if review_only:
         print("🔎 검토 전용 모드: 메일을 읽고 분류하지만 Draft/스팸 DB 변경은 하지 않습니다.")
         print()
+    print(f"🧠 LLM 선택: {llm_choice} ({llm_status_summary()})")
+    print()
 
     emails = await fetcher.fetch()
     tasks = [classifier.classify(email_item) for email_item in emails]
@@ -818,12 +840,14 @@ def build_parser() -> argparse.ArgumentParser:
     run = subparsers.add_parser("run", help="메일 에이전트를 실행합니다.")
     run.add_argument("--source", choices=["dummy", "gmail"], default="dummy")
     run.add_argument("--limit", type=int, default=20)
+    run.add_argument("--llm", choices=["auto", "openai", "ollama", "rules"], default="auto")
     run.add_argument("--interactive", action="store_true", help="시연용 플래그입니다. 현재 자동 승인 정책으로 동작합니다.")
     run.add_argument("--report", action="store_true", help="시연용 플래그입니다. 리포트는 항상 생성됩니다.")
     run.add_argument("--review-only", action="store_true", help="메일 검토만 수행하고 Draft/스팸 DB 변경을 건너뜁니다.")
 
     review = subparsers.add_parser("review-gmail", help="실제 Gmail 메일을 읽어 검토 전용 리포트를 생성합니다.")
     review.add_argument("--limit", type=int, default=20)
+    review.add_argument("--llm", choices=["auto", "openai", "ollama", "rules"], default="auto")
     review.add_argument("--interactive", action="store_true")
     review.add_argument("--report", action="store_true")
 
