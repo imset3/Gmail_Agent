@@ -168,6 +168,7 @@
   <nav>
     <div class="wrap">
       <a href="#overview">개요</a>
+      <a href="#concepts">핵심 개념</a>
       <a href="#run">실행 방법</a>
       <a href="#architecture">구조</a>
       <a href="#flow">처리 흐름</a>
@@ -176,6 +177,7 @@
       <a href="#outputs">산출물</a>
       <a href="#troubleshooting">오류 해결</a>
       <a href="#github">GitHub 제출</a>
+      <a href="#prompt">제작 프롬프트</a>
     </div>
   </nav>
 
@@ -183,6 +185,7 @@
     <section id="overview">
       <h2>1. 프로젝트 개요</h2>
       <p>이 프로젝트는 메일함을 자동으로 분석하는 멀티 Agent 시스템입니다. 입력은 더미 JSON 메일 또는 실제 Gmail API이며, 출력은 콘솔 리포트와 JSON/Markdown 리포트입니다.</p>
+      <p>핵심 목표는 사람이 직접 메일함을 열어 하나씩 판단하던 작업을 Agent 단위로 나누어 자동화하는 것입니다. 단순히 문자열을 분류하는 프로그램이 아니라, 메일 수집, 의미 판단, 일정 충돌 확인, 답장 생성, 스팸 등록, 리포트 작성이라는 여러 업무를 작은 Agent들이 협력해 처리하도록 설계했습니다.</p>
       <div>
         <span class="tag">Dummy Mail</span>
         <span class="tag">Gmail API</span>
@@ -198,8 +201,35 @@
       </div>
     </section>
 
+    <section id="concepts">
+      <h2>2. 핵심 개념</h2>
+      <h3>멀티 Agent란?</h3>
+      <p>멀티 Agent 구조는 하나의 거대한 함수가 모든 일을 처리하는 방식이 아니라, 역할이 분리된 여러 Agent가 순서대로 또는 병렬로 협력하는 구조입니다. 이 프로젝트에서는 메일 가져오기, 분류, 스팸 처리, 일정 확인, 답장 생성, 리포트 생성이 각각 별도 Agent의 책임입니다.</p>
+      <table>
+        <thead>
+          <tr><th>일반 프로그램 방식</th><th>이 프로젝트의 Agent 방식</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>하나의 코드 흐름에서 모든 조건문을 처리</td><td>Agent별 역할을 나누고 결과를 조합</td></tr>
+          <tr><td>기능 추가 시 기존 코드가 복잡해짐</td><td>새 Agent 또는 Provider를 추가해 확장 가능</td></tr>
+          <tr><td>실제 Gmail과 더미 데이터가 섞이기 쉬움</td><td>입력 Provider만 바꾸고 나머지 처리 로직은 재사용</td></tr>
+        </tbody>
+      </table>
+
+      <h3>LLM과 규칙 기반 fallback</h3>
+      <p>메일 의미 판단은 OpenAI 또는 Ollama 같은 LLM Provider가 담당할 수 있도록 만들었습니다. 다만 API 키가 없거나 로컬 모델이 준비되지 않은 환경에서도 과제 시연이 가능해야 하므로, 규칙 기반 fallback을 함께 넣었습니다.</p>
+      <ul>
+        <li><strong>LLM 사용 가능:</strong> 제목과 본문 의미를 보고 스팸, 무응답, 의사결정 필요, 자동답장 등을 판단합니다.</li>
+        <li><strong>LLM 사용 불가:</strong> 광고 키워드, 일정 표현, 승인/검토 문구, 친근한 답장 요청 문구를 기준으로 안정적으로 분류합니다.</li>
+        <li><strong>장점:</strong> 외부 API 설정이 없어도 결과가 재현되며, 설정이 있으면 더 자연스러운 판단으로 확장됩니다.</li>
+      </ul>
+
+      <h3>더미 모드와 Gmail 모드를 분리한 이유</h3>
+      <p>과제 평가는 실행 재현성이 중요합니다. 실제 Gmail은 계정, OAuth, 메일함 상태에 따라 결과가 달라질 수 있으므로, 기본 시연은 더미 데이터로 동일한 결과가 나오게 했습니다. 반면 Gmail API 코드는 실제 연동 능력을 보여주기 위해 같은 파이프라인에 연결했습니다.</p>
+    </section>
+
     <section id="run">
-      <h2>2. 실행 방법</h2>
+      <h2>3. 실행 방법</h2>
       <h3>macOS/Linux</h3>
       <pre><code>cd Gmail_Agent
 python3 start.py</code></pre>
@@ -213,7 +243,7 @@ python3 start.py --auth</code></pre>
     </section>
 
     <section id="architecture">
-      <h2>3. 시스템 구조</h2>
+      <h2>4. 시스템 구조</h2>
       <table>
         <thead>
           <tr><th>파일/폴더</th><th>역할</th></tr>
@@ -242,7 +272,8 @@ python3 start.py --auth</code></pre>
     </section>
 
     <section id="flow">
-      <h2>4. 처리 흐름</h2>
+      <h2>5. 실행 로직과 처리 흐름</h2>
+      <p>실행은 <code>start.py</code> 또는 <code>main.py</code>에서 시작됩니다. 사용자가 더미 모드와 Gmail 모드 중 하나를 선택하면 <code>MailFetchAgent</code>가 입력 데이터를 가져오고, 이후에는 입력 출처와 상관없이 같은 Agent 파이프라인을 통과합니다.</p>
       <ol>
         <li>메일을 가져옵니다. 더미 모드는 <code>dummy_mails/emails.json</code>, Gmail 모드는 Gmail API를 사용합니다.</li>
         <li><code>asyncio.gather</code>로 메일별 분류 작업을 병렬 실행합니다.</li>
@@ -257,10 +288,14 @@ python3 start.py --auth</code></pre>
 [6/7] 🚨 결정필요 | [긴급] 3차 회의 안건 상정
 
 총 처리: 7개 | 의사결정 2 | 일정추가 0 | 답장 1 | 무응답 2 | 스팸 2</code></pre>
+      <h3>병렬 처리 원리</h3>
+      <p>메일 7개가 있을 때 하나씩 순서대로 LLM/규칙 판단을 기다리면 느릴 수 있습니다. 그래서 분류 단계는 <code>asyncio.gather</code>로 메일별 판단 작업을 동시에 예약합니다. 이후 스팸 DB 저장, 더미 답장 저장, 리포트 작성처럼 파일을 갱신하는 단계는 결과를 모은 뒤 순서대로 처리해 데이터가 꼬이지 않게 했습니다.</p>
+      <h3>사용자 판단이 필요한 이유</h3>
+      <p>모든 메일을 자동 처리하면 위험합니다. 예산안 선택, 회의 일정 충돌, 승인 요청처럼 사용자의 의사결정이 필요한 메일은 자동 답장하지 않고 <code>decision_required</code>로 분리합니다. 이 방식은 자동화와 안전성을 함께 만족시키기 위한 설계입니다.</p>
     </section>
 
     <section id="windows">
-      <h2>5. Windows 실행 지원</h2>
+      <h2>6. Windows 실행 지원</h2>
       <p>Windows 사용자는 터미널 명령을 외우지 않아도 됩니다. 압축을 풀고 아래 배치 파일 중 하나를 실행하면 됩니다.</p>
       <table>
         <thead>
@@ -278,7 +313,7 @@ python3 start.py --auth</code></pre>
     </section>
 
     <section id="gmail">
-      <h2>6. Gmail API 적용 방법</h2>
+      <h2>7. Gmail API 적용 방법과 원리</h2>
       <ol>
         <li>Google Cloud Console에서 Gmail API를 활성화합니다.</li>
         <li>OAuth Client를 <strong>Desktop app</strong>으로 생성합니다.</li>
@@ -287,10 +322,31 @@ python3 start.py --auth</code></pre>
         <li><code>python3 start.py --auth</code> 또는 <code>AUTH_GMAIL_WINDOWS.bat</code>을 실행해 인증합니다.</li>
       </ol>
       <p>Gmail 모드에서는 안전을 위해 실제 발송을 하지 않고 Draft 초안만 만듭니다.</p>
+      <h3>OAuth 인증 원리</h3>
+      <p>Gmail API는 사용자의 메일함에 접근하므로 비밀번호를 코드에 넣지 않습니다. 대신 Google Cloud에서 발급받은 <code>credentials.json</code>으로 OAuth 인증 창을 열고, 사용자가 브라우저에서 권한을 승인하면 <code>token.json</code>이 생성됩니다.</p>
+      <ul>
+        <li><code>credentials.json</code>: 이 앱이 어떤 Google OAuth 앱인지 알려주는 설정 파일입니다.</li>
+        <li><code>token.json</code>: 사용자가 승인한 뒤 생성되는 접근 토큰/갱신 토큰 파일입니다.</li>
+        <li>두 파일은 개인정보이므로 GitHub에 올리지 않도록 <code>.gitignore</code>에 제외했습니다.</li>
+      </ul>
+      <h3>메일 읽기 원리</h3>
+      <p>Gmail 모드에서 <code>MailFetchAgent</code>는 Gmail API의 message list/get 흐름을 사용합니다. 먼저 inbox 메시지 ID 목록을 가져오고, 각 ID에 대해 제목, 발신자, 수신자, 날짜, 본문을 읽어 더미 메일과 같은 형태의 <code>EmailItem</code> 구조로 변환합니다. 이렇게 하면 더미 모드와 Gmail 모드가 같은 분류 Agent를 공유할 수 있습니다.</p>
+      <pre><code>Gmail API 원리
+1. users.messages.list(userId="me", q="in:inbox")
+2. users.messages.get(userId="me", id=message_id, format="full")
+3. Gmail header/body를 EmailItem JSON 구조로 변환
+4. ClassificationAgent -> SpamAgent/ScheduleAgent/ReplyAgent로 전달</code></pre>
+      <h3>Draft 생성 원리</h3>
+      <p>자동답장 가능한 메일이 Gmail 모드에서 발견되면 실제 발송하지 않고 Draft만 만듭니다. 답장 본문을 MIME 이메일로 만들고 Base64 URL-safe 형식으로 인코딩한 뒤 Gmail Draft API에 전달합니다. 이러면 Gmail의 임시보관함에 초안이 생기고, 사용자가 직접 확인 후 보낼 수 있습니다.</p>
+      <pre><code>Gmail Draft 생성 흐름
+1. EmailMessage에 To, From, Subject, Body 설정
+2. MIME 메시지를 base64.urlsafe_b64encode로 인코딩
+3. users.drafts.create(userId="me", body={message: {raw, threadId}})
+4. 결과 draft id를 output/reply_drafts.json에 기록</code></pre>
     </section>
 
     <section id="outputs">
-      <h2>7. 생성 산출물</h2>
+      <h2>8. 생성 산출물</h2>
       <table>
         <thead>
           <tr><th>산출물</th><th>설명</th></tr>
@@ -306,7 +362,7 @@ python3 start.py --auth</code></pre>
     </section>
 
     <section id="troubleshooting">
-      <h2>8. 발생 가능 오류와 해결</h2>
+      <h2>9. 발생 가능 오류와 해결</h2>
       <table>
         <thead>
           <tr><th>오류</th><th>원인</th><th>해결</th></tr>
@@ -352,7 +408,7 @@ python3 start.py --auth</code></pre>
     </section>
 
     <section id="github">
-      <h2>9. GitHub 업로드와 ZIP 다운로드</h2>
+      <h2>10. GitHub 업로드와 ZIP 다운로드</h2>
       <p>GitHub에 업로드한 뒤 사용자는 저장소 페이지에서 <strong>Code → Download ZIP</strong>을 눌러 받을 수 있습니다.</p>
       <h3>제출 전 포함할 파일</h3>
       <ul>
@@ -370,13 +426,90 @@ python3 start.py --auth</code></pre>
     </section>
 
     <section>
-      <h2>10. 검증 결과</h2>
+      <h2>11. 검증 결과</h2>
       <p class="ok">더미 모드 실행 결과: 총 7개 처리, 의사결정 2개, 답장 1개, 무응답 2개, 스팸 2개.</p>
       <pre><code>python3 -m py_compile start.py main.py agent.py
 python3 -m unittest discover -s tests
 
 Ran 4 tests
 OK</code></pre>
+    </section>
+
+    <section id="prompt">
+      <h2>12. 이 프로젝트를 Agent에게 만들게 하는 프롬프트</h2>
+      <p>아래 프롬프트를 Codex, ChatGPT, Claude Code 같은 코딩 Agent에게 입력하면 이 프로젝트와 유사한 결과물을 만들도록 지시할 수 있습니다. 과제 요구사항, 실행 방식, 데이터 구조, Gmail API 정책, Windows 지원, 제출 문서까지 포함했습니다.</p>
+      <pre><code>Python으로 Gmail Multi-Agent Email Assistant 과제 프로젝트를 만들어줘.
+
+목표:
+- 실제 Gmail API 또는 더미 JSON 메일 데이터를 사용한다.
+- 여러 Agent가 메일을 병렬로 처리한다.
+- 메일을 스팸, 무응답, 의사결정 필요, 자동답장 가능, 일정 업데이트로 분류한다.
+- 캡쳐 예시처럼 터미널에 처리 진행상황과 최종 리포트를 보기 좋게 출력한다.
+- 기본 시연은 Gmail 인증 없이 더미 데이터만으로 재현 가능해야 한다.
+- Gmail 모드에서는 실제 메일 발송을 하지 말고 Draft 초안만 생성한다.
+
+필수 폴더/파일:
+- main.py: 상세 CLI 진입점
+- start.py: 사용자가 쉽게 실행할 수 있는 메뉴형 진입점
+- agent.py: Agent, Gmail Client, LLM Provider, 리포트 생성 로직
+- dummy_mails/emails.json: 수신 더미 메일
+- dummy_mails/sent_mails.json: 더미 모드 자동답장 발신함
+- data/schedule.json: 일정 충돌 판단용 일정 데이터
+- data/spam_db.json: 스팸 발신자 DB
+- output/results.json: 전체 처리 결과
+- output/reply_drafts.json: 답장 초안 결과
+- report/email_report.md: 제출용 Markdown 리포트
+- docs/submission_guide.html: 개념, 실행 방법, 오류 해결, API 원리를 설명하는 제출용 HTML
+- requirements.txt, README.md, .gitignore
+- Windows용 RUN_WINDOWS.bat, RUN_DUMMY_WINDOWS.bat, AUTH_GMAIL_WINDOWS.bat, RUN_GMAIL_WINDOWS.bat
+
+Agent 구성:
+- MailFetchAgent: dummy 또는 Gmail에서 메일을 가져온다.
+- ClassificationAgent: OpenAI 또는 Ollama LLM으로 판단하되, API가 없으면 규칙 기반 fallback으로 분류한다.
+- SpamAgent: 스팸 메일 발신자를 data/spam_db.json에 저장한다.
+- ScheduleAgent: 메일 본문 날짜/시간과 data/schedule.json을 비교해 일정 충돌을 찾는다.
+- ReplyAgent: 자동답장 가능한 메일에 대해 답장 본문을 생성한다. 더미 모드에서는 sent_mails.json에 저장하고, Gmail 모드에서는 Draft만 생성한다.
+- ReportAgent: 콘솔 출력, JSON 결과, Markdown 리포트를 생성한다.
+
+데이터 구조:
+- dummy_mails/emails.json은 emails 배열을 사용한다.
+- 각 메일 필드는 sender_name, sender_email, subject, body, to, cc, date, is_read, thread_id, msg_id를 포함한다.
+- data/schedule.json은 events 배열을 사용한다.
+- 각 일정 필드는 from, to, event_name, event_detail을 포함한다.
+- sent_mails.json은 sent_mails 배열을 사용하고, to, from, subject, body, in_reply_to_msg_id, thread_id, date, status를 저장한다.
+
+실행 요구:
+- python3 start.py 실행 시 메뉴가 떠야 한다.
+- python3 start.py --dummy 로 더미 모드가 바로 실행되어야 한다.
+- python3 start.py --gmail --limit 20 으로 Gmail 모드가 실행되어야 한다.
+- python3 start.py --auth 로 Gmail OAuth 인증을 수행해야 한다.
+- Windows에서는 RUN_WINDOWS.bat 더블클릭으로 실행 가능해야 한다.
+
+Gmail API 원리:
+- config/credentials.json을 사용해 OAuth 인증을 수행한다.
+- 인증 후 config/token.json을 생성한다.
+- Gmail readonly와 compose 권한만 사용한다.
+- users.messages.list/get으로 메일을 읽고, users.drafts.create로 답장 초안만 만든다.
+- credentials.json과 token.json은 .gitignore에 넣어 GitHub에 업로드하지 않는다.
+
+출력 요구:
+- 처리 중 [1/7] 🚨 스팸 | 제목 형식으로 진행상황을 출력한다.
+- 최종 리포트에는 총 처리, 의사결정, 일정추가, 답장, 무응답, 스팸 카운트를 보여준다.
+- 의사결정 필요 메일은 발신자, 제목, 일정 충돌, 사용자 판단 대기 상태를 보여준다.
+- 자동답장 메일은 답장 본문과 저장 위치를 보여준다.
+
+테스트:
+- 더미 메일 7개를 만들어 스팸 2개, 무응답 2개, 자동답장 1개, 의사결정 필요 2개가 나오게 한다.
+- unittest로 분류 카운트, 자동답장 감지, 일정 충돌 감지를 검증한다.
+
+문서:
+- README.md에는 빠른 실행, Gmail 인증, Windows 실행, 산출물 설명을 작성한다.
+- docs/submission_guide.html에는 프로젝트 개념, 멀티 Agent 구조, 실행 로직, Gmail API 원리, 오류 해결, GitHub ZIP 제출 방법, 이 프롬프트를 포함한다.
+
+주의:
+- 실제 Gmail 발송은 하지 않는다.
+- 외부 API 키가 없어도 더미 모드는 반드시 실행되어야 한다.
+- 개인정보 파일은 절대 GitHub에 올리지 않는다.</code></pre>
     </section>
   </main>
 
