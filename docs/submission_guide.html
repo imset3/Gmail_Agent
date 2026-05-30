@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gmail Multi-Agent Email Assistant 제출 문서</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #5f6b7a;
+      --line: #d9e0ea;
+      --blue: #246bfe;
+      --green: #168a4a;
+      --red: #c03535;
+      --amber: #b66a00;
+      --code: #101828;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    header {
+      background: linear-gradient(135deg, #172033, #246bfe);
+      color: white;
+      padding: 52px 24px;
+    }
+    .wrap {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+    header h1 {
+      margin: 0 0 12px;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    header p {
+      margin: 0;
+      max-width: 780px;
+      color: #e9eefc;
+      font-size: 18px;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,0.96);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    nav .wrap {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+    nav a {
+      color: var(--ink);
+      text-decoration: none;
+      padding: 7px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    nav a:hover { background: #eef3ff; }
+    main { padding: 28px 0 56px; }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 26px;
+      margin: 18px 0;
+      box-shadow: 0 8px 24px rgba(23,32,51,0.05);
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 26px;
+      line-height: 1.25;
+    }
+    h3 {
+      margin: 22px 0 8px;
+      font-size: 19px;
+    }
+    p { margin: 8px 0 12px; }
+    ul, ol { padding-left: 22px; }
+    li { margin: 5px 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcff;
+    }
+    .card strong { display: block; margin-bottom: 4px; }
+    code {
+      background: #eef2f7;
+      color: var(--code);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+    pre {
+      background: #101828;
+      color: #e5edf8;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #eef3ff; }
+    .ok { color: var(--green); font-weight: 700; }
+    .warn { color: var(--amber); font-weight: 700; }
+    .bad { color: var(--red); font-weight: 700; }
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef3ff;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      margin: 2px 4px 2px 0;
+    }
+    footer {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Gmail Multi-Agent Email Assistant</h1>
+      <p>실제 Gmail API 또는 더미 메일 데이터를 사용해 메일을 병렬 분류하고, 자동답장·스팸 등록·일정 충돌·사용자 판단 필요 항목을 처리하는 과제 제출 문서입니다.</p>
+    </div>
+  </header>
+
+  <nav>
+    <div class="wrap">
+      <a href="#overview">개요</a>
+      <a href="#run">실행 방법</a>
+      <a href="#architecture">구조</a>
+      <a href="#flow">처리 흐름</a>
+      <a href="#windows">Windows</a>
+      <a href="#gmail">Gmail API</a>
+      <a href="#outputs">산출물</a>
+      <a href="#troubleshooting">오류 해결</a>
+      <a href="#github">GitHub 제출</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <section id="overview">
+      <h2>1. 프로젝트 개요</h2>
+      <p>이 프로젝트는 메일함을 자동으로 분석하는 멀티 Agent 시스템입니다. 입력은 더미 JSON 메일 또는 실제 Gmail API이며, 출력은 콘솔 리포트와 JSON/Markdown 리포트입니다.</p>
+      <div>
+        <span class="tag">Dummy Mail</span>
+        <span class="tag">Gmail API</span>
+        <span class="tag">Multi-Agent</span>
+        <span class="tag">LLM/Ollama/OpenAI 교체 가능</span>
+        <span class="tag">Windows 지원</span>
+      </div>
+      <div class="grid">
+        <div class="card"><strong>스팸</strong>광고, 이벤트, 의심 발신자를 탐지하고 <code>data/spam_db.json</code>에 등록합니다.</div>
+        <div class="card"><strong>무응답</strong>공지, 시스템 알림, 단순 안내 메일은 답장 불필요로 분류합니다.</div>
+        <div class="card"><strong>의사결정 필요</strong>일정 충돌, 예산안, 승인 요청처럼 사용자의 판단이 필요한 항목을 따로 모읍니다.</div>
+        <div class="card"><strong>자동답장</strong>답장 가능한 메일은 더미 발신함 또는 Gmail Draft 초안으로 저장합니다.</div>
+      </div>
+    </section>
+
+    <section id="run">
+      <h2>2. 실행 방법</h2>
+      <h3>macOS/Linux</h3>
+      <pre><code>cd Gmail_Agent
+python3 start.py</code></pre>
+      <h3>Windows</h3>
+      <p>압축을 풀고 <code>RUN_WINDOWS.bat</code>을 더블클릭하면 메뉴가 실행됩니다.</p>
+      <pre><code>RUN_WINDOWS.bat</code></pre>
+      <h3>명령어로 바로 실행</h3>
+      <pre><code>python3 start.py --dummy
+python3 start.py --gmail --limit 20
+python3 start.py --auth</code></pre>
+    </section>
+
+    <section id="architecture">
+      <h2>3. 시스템 구조</h2>
+      <table>
+        <thead>
+          <tr><th>파일/폴더</th><th>역할</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>main.py</code></td><td>기존 CLI 진입점입니다.</td></tr>
+          <tr><td><code>start.py</code></td><td>메뉴형 간편 실행 진입점입니다.</td></tr>
+          <tr><td><code>agent.py</code></td><td>Agent, Gmail Client, LLM Provider, 리포트 생성 로직이 들어 있습니다.</td></tr>
+          <tr><td><code>dummy_mails/emails.json</code></td><td>수신 더미 메일 데이터입니다.</td></tr>
+          <tr><td><code>dummy_mails/sent_mails.json</code></td><td>더미 모드에서 자동답장한 발신 메일 저장소입니다.</td></tr>
+          <tr><td><code>data/schedule.json</code></td><td>일정 충돌 판단에 사용하는 일정 데이터입니다.</td></tr>
+          <tr><td><code>data/spam_db.json</code></td><td>스팸 처리된 발신자 목록입니다.</td></tr>
+          <tr><td><code>output/</code>, <code>report/</code></td><td>실행 결과 JSON과 제출용 Markdown 리포트를 저장합니다.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Agent 역할</h3>
+      <ul>
+        <li><strong>MailFetchAgent</strong>: 더미 JSON 또는 Gmail API에서 메일을 가져옵니다.</li>
+        <li><strong>ClassificationAgent</strong>: LLM 또는 규칙 기반 fallback으로 메일을 분류합니다.</li>
+        <li><strong>SpamAgent</strong>: 스팸 발신자를 DB에 저장합니다.</li>
+        <li><strong>ScheduleAgent</strong>: 메일 속 날짜와 기존 일정을 비교해 충돌을 찾습니다.</li>
+        <li><strong>ReplyAgent</strong>: 자동답장 결과를 더미 발신함 또는 Gmail Draft로 저장합니다.</li>
+        <li><strong>ReportAgent</strong>: 콘솔, JSON, Markdown 리포트를 생성합니다.</li>
+      </ul>
+    </section>
+
+    <section id="flow">
+      <h2>4. 처리 흐름</h2>
+      <ol>
+        <li>메일을 가져옵니다. 더미 모드는 <code>dummy_mails/emails.json</code>, Gmail 모드는 Gmail API를 사용합니다.</li>
+        <li><code>asyncio.gather</code>로 메일별 분류 작업을 병렬 실행합니다.</li>
+        <li>스팸은 <code>spam_db.json</code>에 등록합니다.</li>
+        <li>의사결정 필요 메일은 일정 충돌과 사용자 판단 상태를 기록합니다.</li>
+        <li>자동답장 메일은 더미 모드에서 <code>sent_mails.json</code>에 저장하고, Gmail 모드에서는 Draft 초안을 생성합니다.</li>
+        <li>최종 결과를 콘솔과 <code>output/results.json</code>, <code>report/email_report.md</code>에 저장합니다.</li>
+      </ol>
+      <pre><code>[1/7] 🚨 스팸 | 🎉 축하합니다! 당첨되었습니다!
+[3/7] 📋 무응답 | [GitHub] Pull request #142 merged
+[5/7] ✅ 답장완료 | 오랜만이에요!
+[6/7] 🚨 결정필요 | [긴급] 3차 회의 안건 상정
+
+총 처리: 7개 | 의사결정 2 | 일정추가 0 | 답장 1 | 무응답 2 | 스팸 2</code></pre>
+    </section>
+
+    <section id="windows">
+      <h2>5. Windows 실행 지원</h2>
+      <p>Windows 사용자는 터미널 명령을 외우지 않아도 됩니다. 압축을 풀고 아래 배치 파일 중 하나를 실행하면 됩니다.</p>
+      <table>
+        <thead>
+          <tr><th>파일</th><th>용도</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>RUN_WINDOWS.bat</code></td><td>메뉴 실행: 더미/Gmail/인증을 선택합니다.</td></tr>
+          <tr><td><code>RUN_DUMMY_WINDOWS.bat</code></td><td>더미 메일 모드로 바로 실행합니다.</td></tr>
+          <tr><td><code>AUTH_GMAIL_WINDOWS.bat</code></td><td>Gmail OAuth 인증을 실행합니다.</td></tr>
+          <tr><td><code>RUN_GMAIL_WINDOWS.bat</code></td><td>Gmail 패키지를 설치한 뒤 실제 Gmail 모드로 실행합니다.</td></tr>
+          <tr><td><code>RUN_WINDOWS.ps1</code></td><td>PowerShell 환경에서 메뉴를 실행합니다.</td></tr>
+        </tbody>
+      </table>
+      <p class="warn">주의: Gmail API를 쓰려면 <code>config/credentials.json</code> 파일이 필요합니다. 이 파일은 개인정보라 GitHub에는 올리지 않습니다.</p>
+    </section>
+
+    <section id="gmail">
+      <h2>6. Gmail API 적용 방법</h2>
+      <ol>
+        <li>Google Cloud Console에서 Gmail API를 활성화합니다.</li>
+        <li>OAuth Client를 <strong>Desktop app</strong>으로 생성합니다.</li>
+        <li>다운로드한 JSON 파일명을 <code>credentials.json</code>으로 바꿉니다.</li>
+        <li><code>config/credentials.json</code> 위치에 넣습니다.</li>
+        <li><code>python3 start.py --auth</code> 또는 <code>AUTH_GMAIL_WINDOWS.bat</code>을 실행해 인증합니다.</li>
+      </ol>
+      <p>Gmail 모드에서는 안전을 위해 실제 발송을 하지 않고 Draft 초안만 만듭니다.</p>
+    </section>
+
+    <section id="outputs">
+      <h2>7. 생성 산출물</h2>
+      <table>
+        <thead>
+          <tr><th>산출물</th><th>설명</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>output/results.json</code></td><td>메일별 분류 결과, 판단 이유, 일정 충돌, 사용자 판단 상태가 저장됩니다.</td></tr>
+          <tr><td><code>output/reply_drafts.json</code></td><td>자동답장 대상과 답장 본문이 저장됩니다.</td></tr>
+          <tr><td><code>dummy_mails/sent_mails.json</code></td><td>더미 모드 자동답장을 실제 발신함처럼 저장합니다.</td></tr>
+          <tr><td><code>report/email_report.md</code></td><td>제출용 Markdown 리포트입니다.</td></tr>
+          <tr><td><code>data/spam_db.json</code></td><td>신규 스팸 발신자 목록입니다.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>8. 발생 가능 오류와 해결</h2>
+      <table>
+        <thead>
+          <tr><th>오류</th><th>원인</th><th>해결</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Python이 설치되어 있지 않습니다</code></td>
+            <td>Windows PATH에 Python이 없습니다.</td>
+            <td>Python 3.10 이상 설치 후 <strong>Add python.exe to PATH</strong>를 체크합니다.</td>
+          </tr>
+          <tr>
+            <td><code>ModuleNotFoundError: google...</code></td>
+            <td>Gmail API 패키지가 설치되지 않았습니다.</td>
+            <td><code>pip install -r requirements.txt</code> 또는 <code>RUN_GMAIL_WINDOWS.bat</code> 실행.</td>
+          </tr>
+          <tr>
+            <td><code>config/credentials.json 파일이 필요합니다</code></td>
+            <td>Gmail OAuth JSON 파일이 없습니다.</td>
+            <td>다운로드한 OAuth JSON을 <code>config/credentials.json</code>으로 저장합니다.</td>
+          </tr>
+          <tr>
+            <td><code>403 access_denied</code></td>
+            <td>OAuth 앱이 Testing 상태인데 테스트 사용자에 Gmail 계정이 없습니다.</td>
+            <td>Google Cloud Console의 OAuth consent screen에서 Test users에 로그인 계정을 추가합니다.</td>
+          </tr>
+          <tr>
+            <td>Gmail은 되는데 답장이 발송되지 않음</td>
+            <td>의도된 안전 정책입니다.</td>
+            <td>실제 발송 대신 Gmail Draft 초안만 생성합니다. Gmail에서 직접 확인 후 발송하면 됩니다.</td>
+          </tr>
+          <tr>
+            <td>LLM이 실행되지 않음</td>
+            <td>OpenAI/Ollama 환경변수가 없습니다.</td>
+            <td>기본 규칙 fallback으로 정상 실행됩니다. LLM을 쓰려면 <code>OPENAI_API_KEY</code> 또는 <code>OLLAMA_MODEL</code>을 설정합니다.</td>
+          </tr>
+          <tr>
+            <td>GitHub에 인증 파일이 올라갈까 걱정됨</td>
+            <td>OAuth 파일은 민감 정보입니다.</td>
+            <td><code>.gitignore</code>에 <code>config/credentials.json</code>, <code>config/token.json</code>을 제외 처리했습니다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="github">
+      <h2>9. GitHub 업로드와 ZIP 다운로드</h2>
+      <p>GitHub에 업로드한 뒤 사용자는 저장소 페이지에서 <strong>Code → Download ZIP</strong>을 눌러 받을 수 있습니다.</p>
+      <h3>제출 전 포함할 파일</h3>
+      <ul>
+        <li>소스 코드: <code>agent.py</code>, <code>main.py</code>, <code>start.py</code></li>
+        <li>더미 데이터: <code>dummy_mails/</code>, <code>data/</code></li>
+        <li>Windows 실행 파일: <code>RUN_WINDOWS.bat</code> 등</li>
+        <li>문서: <code>README.md</code>, <code>docs/submission_guide.html</code></li>
+      </ul>
+      <h3>제외할 파일</h3>
+      <ul>
+        <li><code>config/credentials.json</code>: Google OAuth 개인 인증 파일</li>
+        <li><code>config/token.json</code>: 로그인 토큰</li>
+        <li><code>__pycache__/</code>, <code>.DS_Store</code>: 실행/OS 캐시</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>10. 검증 결과</h2>
+      <p class="ok">더미 모드 실행 결과: 총 7개 처리, 의사결정 2개, 답장 1개, 무응답 2개, 스팸 2개.</p>
+      <pre><code>python3 -m py_compile start.py main.py agent.py
+python3 -m unittest discover -s tests
+
+Ran 4 tests
+OK</code></pre>
+    </section>
+  </main>
+
+  <footer>
+    Gmail Multi-Agent Email Assistant 제출 문서
+  </footer>
+</body>
+</html>

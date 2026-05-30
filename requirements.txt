@@ -1,0 +1,4 @@
+# 더미 모드는 Python 표준 라이브러리만으로 실행됩니다.
+google-api-python-client>=2.130.0
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0

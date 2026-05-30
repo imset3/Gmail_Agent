@@ -1,0 +1,88 @@
+{
+  "emails": [
+    {
+      "sender_name": "이벤트팀",
+      "sender_email": "promo@spam123.com",
+      "subject": "🎉 축하합니다! 당첨되었습니다!",
+      "body": "축하합니다! 100만원 상품에 당첨되셨습니다. 지금 바로 클릭하세요. 기회를 놓치지 마세요!",
+      "to": ["me@gmail.com"],
+      "cc": [],
+      "date": "Thu, 28 May 2026 07:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb1",
+      "msg_id": "19e6ad2ba502bfb1"
+    },
+    {
+      "sender_name": "홍길동",
+      "sender_email": "sale@unknown-shop.com",
+      "subject": "오늘만 무료배송! 놓치면 후회하는 특가",
+      "body": "안녕하세요 고객님. 오늘 하루만 전 상품 무료배송 이벤트를 진행합니다. 지금 바로 구매하시면 추가 할인 쿠폰도 드립니다. 수신거부를 원하시면 여기를 클릭하세요.",
+      "to": ["me@gmail.com"],
+      "cc": [],
+      "date": "Thu, 28 May 2026 08:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb2",
+      "msg_id": "19e6ad2ba502bfb2"
+    },
+    {
+      "sender_name": "GitHub",
+      "sender_email": "noreply@github.com",
+      "subject": "[GitHub] Pull request #142 merged",
+      "body": "강용천님, pull request #142 'Fix login bug'가 main 브랜치에 성공적으로 merge되었습니다. 추가 조치는 필요하지 않습니다.",
+      "to": ["me@gmail.com", "team.lead@company.com"],
+      "cc": [],
+      "date": "Thu, 28 May 2026 09:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb3",
+      "msg_id": "19e6ad2ba502bfb3"
+    },
+    {
+      "sender_name": "시설팀",
+      "sender_email": "facility@company.com",
+      "subject": "사무실 에어컨 점검 안내",
+      "body": "안녕하세요. 2026-05-28 14:00 ~ 2026-05-28 16:00 사무실 에어컨 정기 점검이 진행됩니다. 점검 중 에어컨 사용이 중단됩니다.",
+      "to": ["me@gmail.com"],
+      "cc": [],
+      "date": "Thu, 28 May 2026 10:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb4",
+      "msg_id": "19e6ad2ba502bfb4"
+    },
+    {
+      "sender_name": "박영희",
+      "sender_email": "younghee@gmail.com",
+      "subject": "오랜만이에요!",
+      "body": "안녕! 요즘 잘 지내? 나 다음 주에 서울 올라오는데 시간 괜찮으면 꼭 밥 먹자. 언제가 좋을지 이야기해줘.",
+      "to": ["me@gmail.com"],
+      "cc": [],
+      "date": "Thu, 28 May 2026 11:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb5",
+      "msg_id": "19e6ad2ba502bfb5"
+    },
+    {
+      "sender_name": "김철수",
+      "sender_email": "chulsoo@company.com",
+      "subject": "[긴급] 3차 회의 안건 상정",
+      "body": "팀 목표 재정의를 위한 안건 상정이 필요합니다. 2026-05-29 15:00 ~ 2026-05-29 16:30 회의 가능 여부를 검토해 주세요. 대안: 2026-06-01 15:00 ~ 2026-06-01 16:00",
+      "to": ["me@gmail.com"],
+      "cc": ["team@company.com"],
+      "date": "Thu, 28 May 2026 12:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb6",
+      "msg_id": "19e6ad2ba502bfb6"
+    },
+    {
+      "sender_name": "이민호",
+      "sender_email": "manager.lee@company.com",
+      "subject": "Q1 예산안 검토 요청",
+      "body": "Q1 예산안에 대한 검토와 의견 제출이 요청되었습니다. A안과 B안의 장단점을 검토하고 두 가지 선택지 중 하나를 결정해야 합니다.",
+      "to": ["me@gmail.com"],
+      "cc": ["finance@company.com"],
+      "date": "Thu, 28 May 2026 13:00:00 +0900",
+      "is_read": false,
+      "thread_id": "19e6ad2ba502bfb7",
+      "msg_id": "19e6ad2ba502bfb7"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "sent_mails": [
+    {
+      "to": [
+        "younghee@gmail.com"
+      ],
+      "from": "me@gmail.com",
+      "subject": "Re: 오랜만이에요!",
+      "body": "안녕 박영희야! 나도 잘 지내고 있어. 서울 올라오는구나! 시간 괜찮으면 꼭 밥 먹자. 언제가 좋을지 이야기해줘 😄",
+      "in_reply_to_msg_id": "19e6ad2ba502bfb5",
+      "thread_id": "19e6ad2ba502bfb5",
+      "date": "2026-05-30 10:38:56",
+      "status": "sent_dummy"
+    }
+  ]
+}
