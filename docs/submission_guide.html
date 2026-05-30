@@ -486,6 +486,7 @@ OK</code></pre>
 - Gmail 모드에서는 실제 메일 발송을 하지 말고 Draft 초안만 생성한다.
 - 실제 Gmail 검토 전용 모드를 별도로 제공한다. 이 모드는 Gmail API로 내 inbox 메일을 불러와 분류/리포트만 만들고 Draft 생성이나 스팸 DB 변경은 하지 않는다.
 - 실행 시 --llm auto/openai/ollama/rules 옵션을 제공한다. 메뉴 실행에서는 OpenAI 키와 Ollama 서버 감지 상태를 보여주고 사용자가 선택할 수 있게 한다.
+- GitHub Release에 바로 받을 수 있는 제출용 ZIP을 올릴 수 있도록 ZIP 생성과 문서화를 포함한다.
 
 필수 폴더/파일:
 - main.py: 상세 CLI 진입점
@@ -500,7 +501,7 @@ OK</code></pre>
 - report/email_report.md: 제출용 Markdown 리포트
 - docs/submission_guide.html: 개념, 실행 방법, 오류 해결, API 원리를 설명하는 제출용 HTML
 - requirements.txt, README.md, .gitignore
-- Windows용 RUN_WINDOWS.bat, RUN_DUMMY_WINDOWS.bat, AUTH_GMAIL_WINDOWS.bat, REVIEW_GMAIL_WINDOWS.bat, RUN_GMAIL_WINDOWS.bat
+- Windows용 RUN_WINDOWS.bat, RUN_DUMMY_WINDOWS.bat, AUTH_GMAIL_WINDOWS.bat, REVIEW_GMAIL_WINDOWS.bat, RUN_GMAIL_WINDOWS.bat, RUN_WINDOWS.ps1
 
 Agent 구성:
 - MailFetchAgent: dummy 또는 Gmail에서 메일을 가져온다.
@@ -509,6 +510,7 @@ Agent 구성:
 - ScheduleAgent: 메일 본문 날짜/시간과 data/schedule.json을 비교해 일정 충돌을 찾는다.
 - ReplyAgent: 자동답장 가능한 메일에 대해 답장 본문을 생성한다. 더미 모드에서는 sent_mails.json에 저장하고, Gmail 모드에서는 Draft만 생성한다.
 - ReportAgent: 콘솔 출력, JSON 결과, Markdown 리포트를 생성한다.
+- LLMRouter: --llm 옵션에 따라 auto/openai/ollama/rules 중 하나를 선택한다.
 
 데이터 구조:
 - dummy_mails/emails.json은 emails 배열을 사용한다.
@@ -523,6 +525,8 @@ Agent 구성:
 - python3 start.py --review-gmail --limit 20 --llm openai 로 실제 Gmail 검토 전용 모드와 OpenAI 판단을 함께 사용할 수 있어야 한다.
 - python3 start.py --gmail --limit 20 --llm auto 로 Gmail 모드가 실행되어야 한다.
 - python3 start.py --auth 로 Gmail OAuth 인증을 수행해야 한다.
+- python3 main.py run --source gmail --limit 20 --llm ollama --interactive --report 처럼 상세 CLI에서도 LLM을 선택할 수 있어야 한다.
+- python3 main.py review-gmail --limit 20 --llm rules --interactive --report 처럼 검토 전용 CLI에서도 LLM을 선택할 수 있어야 한다.
 - Windows에서는 RUN_WINDOWS.bat 더블클릭으로 실행 가능해야 한다.
 
 LLM 선택 원리:
@@ -532,6 +536,8 @@ LLM 선택 원리:
 - ollama는 로컬 Ollama 서버와 모델을 사용한다.
 - rules는 외부 LLM 없이 규칙 기반으로만 분류한다.
 - 선택한 LLM이 실패하면 과제 시연이 중단되지 않도록 규칙 기반 fallback으로 처리한다.
+- 콘솔에 LLM 선택값과 OpenAI/Ollama 감지 상태를 출력한다.
+- Ollama 사용자는 ollama serve와 ollama pull llama3.1을 실행하면 된다.
 
 Gmail API 원리:
 - config/credentials.json을 사용해 OAuth 인증을 수행한다.
@@ -539,6 +545,8 @@ Gmail API 원리:
 - Gmail readonly와 compose 권한만 사용한다.
 - users.messages.list/get으로 메일을 읽고, users.drafts.create로 답장 초안만 만든다.
 - review-gmail 모드에서는 users.messages.list/get으로 메일을 읽고 분류하되 users.drafts.create를 호출하지 않는다.
+- review-gmail 모드의 자동답장 후보는 review_only_no_draft로 기록한다.
+- review-gmail 모드의 스팸 후보는 review_only_no_spam_db로 기록하고 data/spam_db.json을 변경하지 않는다.
 - credentials.json과 token.json은 .gitignore에 넣어 GitHub에 업로드하지 않는다.
 
 출력 요구:
@@ -553,11 +561,13 @@ Gmail API 원리:
 
 문서:
 - README.md에는 빠른 실행, Gmail 인증, Windows 실행, 산출물 설명을 작성한다.
-- docs/submission_guide.html에는 프로젝트 개념, 멀티 Agent 구조, 실행 로직, Gmail API 원리, 오류 해결, GitHub ZIP 제출 방법, 이 프롬프트를 포함한다.
+- docs/submission_guide.html에는 프로젝트 개념, 멀티 Agent 구조, LLM 선택 원리, 실행 로직, Gmail API 원리, 오류 해결, GitHub ZIP 제출 방법, 이 프롬프트를 포함한다.
+- GitHub Release용 ZIP은 git archive --format=zip -o Gmail_Agent_submission.zip HEAD 방식으로 만들 수 있게 안내한다.
 
 주의:
 - 실제 Gmail 발송은 하지 않는다.
 - 외부 API 키가 없어도 더미 모드는 반드시 실행되어야 한다.
+- OpenAI 키나 Ollama가 없어도 rules 모드와 fallback으로 과제 시연은 가능해야 한다.
 - 개인정보 파일은 절대 GitHub에 올리지 않는다.</code></pre>
     </section>
   </main>
