@@ -14,6 +14,7 @@ python3 start.py
 
 ```bash
 python3 start.py --dummy
+python3 start.py --review-gmail --limit 20
 python3 start.py --gmail --limit 20
 python3 start.py --auth
 ```
@@ -34,6 +35,12 @@ Windows에서 Gmail 인증:
 
 ```text
 AUTH_GMAIL_WINDOWS.bat
+```
+
+Windows에서 실제 Gmail 메일 검토만 실행:
+
+```text
+REVIEW_GMAIL_WINDOWS.bat
 ```
 
 기존 상세 명령:
@@ -78,7 +85,10 @@ export OLLAMA_MODEL=llama3.1
 
 ## Gmail API
 
-Gmail 모드는 실제 발송하지 않고 Draft 초안만 생성합니다.
+Gmail API는 두 가지 방식으로 사용할 수 있습니다.
+
+- 검토 전용 모드: 실제 Gmail 메일을 읽고 분류/리포트만 생성하며 Draft를 만들지 않습니다.
+- Gmail 실행 모드: 실제 Gmail 메일을 읽고, 자동답장 가능한 메일은 Gmail Draft 초안까지 생성합니다.
 
 1. Google Cloud Console에서 Gmail API를 활성화합니다.
 2. OAuth Desktop App credentials를 내려받아 `config/credentials.json`에 둡니다.
@@ -87,7 +97,14 @@ Gmail 모드는 실제 발송하지 않고 Draft 초안만 생성합니다.
 ```bash
 pip install -r requirements.txt
 python main.py auth-gmail
+python main.py review-gmail --limit 20 --interactive --report
 python main.py run --source gmail --limit 20 --interactive --report
+```
+
+가장 안전한 실제 Gmail 시연은 아래 명령입니다.
+
+```bash
+python3 start.py --review-gmail --limit 20
 ```
 
 ## 제출 문서

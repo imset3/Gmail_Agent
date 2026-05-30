@@ -11,6 +11,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="간편 실행 메뉴")
     parser.add_argument("--dummy", action="store_true", help="더미 메일 모드로 바로 실행")
     parser.add_argument("--gmail", action="store_true", help="Gmail API 모드로 바로 실행")
+    parser.add_argument("--review-gmail", action="store_true", help="실제 Gmail 메일을 읽어 검토 전용으로 실행")
     parser.add_argument("--auth", action="store_true", help="Gmail OAuth 인증 실행")
     parser.add_argument("--limit", type=int, default=20, help="Gmail에서 가져올 최대 메일 수")
     return parser
@@ -21,9 +22,10 @@ async def run_menu(limit: int) -> int:
     print("Gmail Multi-Agent Email Assistant")
     print("=" * 54)
     print("1. 더미 메일로 실행")
-    print("2. 실제 Gmail로 실행")
-    print("3. Gmail 인증하기")
-    print("4. 종료")
+    print("2. 실제 Gmail 메일 검토하기")
+    print("3. 실제 Gmail 실행하기(Draft 생성 가능)")
+    print("4. Gmail 인증하기")
+    print("5. 종료")
     print()
 
     choice = input("선택 [1]: ").strip() or "1"
@@ -31,11 +33,15 @@ async def run_menu(limit: int) -> int:
         return await main_async(["run", "--source", "dummy", "--interactive", "--report"])
     if choice == "2":
         return await main_async(
-            ["run", "--source", "gmail", "--limit", str(limit), "--interactive", "--report"]
+            ["review-gmail", "--limit", str(limit), "--interactive", "--report"]
         )
     if choice == "3":
-        return await main_async(["auth-gmail"])
+        return await main_async(
+            ["run", "--source", "gmail", "--limit", str(limit), "--interactive", "--report"]
+        )
     if choice == "4":
+        return await main_async(["auth-gmail"])
+    if choice == "5":
         print("종료합니다.")
         return 0
 
@@ -45,9 +51,9 @@ async def run_menu(limit: int) -> int:
 
 async def main() -> int:
     args = build_parser().parse_args()
-    selected = sum([args.dummy, args.gmail, args.auth])
+    selected = sum([args.dummy, args.gmail, args.review_gmail, args.auth])
     if selected > 1:
-        print("--dummy, --gmail, --auth 중 하나만 선택하세요.", file=sys.stderr)
+        print("--dummy, --gmail, --review-gmail, --auth 중 하나만 선택하세요.", file=sys.stderr)
         return 2
     if args.dummy:
         return await main_async(["run", "--source", "dummy", "--interactive", "--report"])
@@ -55,6 +61,8 @@ async def main() -> int:
         return await main_async(
             ["run", "--source", "gmail", "--limit", str(args.limit), "--interactive", "--report"]
         )
+    if args.review_gmail:
+        return await main_async(["review-gmail", "--limit", str(args.limit), "--interactive", "--report"])
     if args.auth:
         return await main_async(["auth-gmail"])
     return await run_menu(args.limit)

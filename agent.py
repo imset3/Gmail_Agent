@@ -720,7 +720,10 @@ def print_spam(result: AgentResult) -> None:
     email_item = result.email
     print(f"🚫 발신자 : {email_item.get('sender_name')} <{email_item.get('sender_email')}>")
     print(f"   제목   : {email_item.get('subject')}")
-    print(f"   처리   : 스팸 DB 등록")
+    if result.gmail_action == "review_only_no_spam_db":
+        print("   처리   : 검토만 수행 (스팸 DB 미등록)")
+    else:
+        print("   처리   : 스팸 DB 등록")
     print()
 
 
@@ -736,6 +739,11 @@ async def run_pipeline(args: argparse.Namespace) -> list[AgentResult]:
     spam_agent = SpamAgent()
     schedule_agent = ScheduleAgent()
     reply_agent = ReplyAgent(args.source)
+    review_only = bool(getattr(args, "review_only", False))
+
+    if review_only:
+        print("🔎 검토 전용 모드: 메일을 읽고 분류하지만 Draft/스팸 DB 변경은 하지 않습니다.")
+        print()
 
     emails = await fetcher.fetch()
     tasks = [classifier.classify(email_item) for email_item in emails]
@@ -746,8 +754,14 @@ async def run_pipeline(args: argparse.Namespace) -> list[AgentResult]:
         result = schedule_agent.enrich(result)
         spam_new = False
         if result.category == "spam":
-            spam_new = spam_agent.register(result)
-        await reply_agent.handle(result)
+            if review_only:
+                result.gmail_action = "review_only_no_spam_db"
+            else:
+                spam_new = spam_agent.register(result)
+        if review_only and result.category == "auto_reply":
+            result.gmail_action = "review_only_no_draft"
+        elif not review_only:
+            await reply_agent.handle(result)
         print_progress(index, len(classified), result, spam_new)
         results.append(result)
 
@@ -806,6 +820,12 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--limit", type=int, default=20)
     run.add_argument("--interactive", action="store_true", help="시연용 플래그입니다. 현재 자동 승인 정책으로 동작합니다.")
     run.add_argument("--report", action="store_true", help="시연용 플래그입니다. 리포트는 항상 생성됩니다.")
+    run.add_argument("--review-only", action="store_true", help="메일 검토만 수행하고 Draft/스팸 DB 변경을 건너뜁니다.")
+
+    review = subparsers.add_parser("review-gmail", help="실제 Gmail 메일을 읽어 검토 전용 리포트를 생성합니다.")
+    review.add_argument("--limit", type=int, default=20)
+    review.add_argument("--interactive", action="store_true")
+    review.add_argument("--report", action="store_true")
 
     subparsers.add_parser("auth-gmail", help="Gmail OAuth 토큰을 생성합니다.")
     return parser
@@ -817,6 +837,11 @@ async def main_async(argv: list[str] | None = None) -> int:
     if args.command == "auth-gmail":
         GmailClient()._service()
         print("Gmail OAuth 인증이 완료되었습니다.")
+        return 0
+    if args.command == "review-gmail":
+        args.source = "gmail"
+        args.review_only = True
+        await run_pipeline(args)
         return 0
     if args.command in (None, "run"):
         if args.command is None:
