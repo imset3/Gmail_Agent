@@ -12,7 +12,7 @@ LLM_CHOICES = {"1": "auto", "2": "openai", "3": "ollama", "4": "rules"}
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="간편 실행 메뉴")
-    parser.add_argument("--dummy", action="store_true", help="더미 메일 모드로 바로 실행")
+    parser.add_argument("--dummy", action="store_true", help="샘플 메일 모드로 바로 실행")
     parser.add_argument("--gmail", action="store_true", help="Gmail API 모드로 바로 실행")
     parser.add_argument("--review-gmail", action="store_true", help="실제 Gmail 메일을 읽어 검토 전용으로 실행")
     parser.add_argument("--auth", action="store_true", help="Gmail OAuth 인증 실행")
@@ -37,7 +37,7 @@ async def run_menu(limit: int, llm: str) -> int:
     print("=" * 54)
     print("Gmail Multi-Agent Email Assistant")
     print("=" * 54)
-    print("1. 더미 메일로 실행")
+    print("1. 샘플 메일로 실행")
     print("2. 실제 Gmail 메일 검토하기")
     print("3. 실제 Gmail 실행하기(Draft 생성 가능)")
     print("4. Gmail 인증하기")

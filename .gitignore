@@ -5,3 +5,6 @@ __pycache__/
 .env
 config/token.json
 config/credentials.json
+dummy_mails/sent_mails.json
+output/*.json
+report/*.md

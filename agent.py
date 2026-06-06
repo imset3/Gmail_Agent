@@ -834,15 +834,15 @@ def ensure_runtime_files() -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Gmail/dummy multi-agent email assistant")
+    parser = argparse.ArgumentParser(description="Gmail and sample-mail assistant")
     subparsers = parser.add_subparsers(dest="command")
 
     run = subparsers.add_parser("run", help="메일 에이전트를 실행합니다.")
     run.add_argument("--source", choices=["dummy", "gmail"], default="dummy")
     run.add_argument("--limit", type=int, default=20)
     run.add_argument("--llm", choices=["auto", "openai", "ollama", "rules"], default="auto")
-    run.add_argument("--interactive", action="store_true", help="시연용 플래그입니다. 현재 자동 승인 정책으로 동작합니다.")
-    run.add_argument("--report", action="store_true", help="시연용 플래그입니다. 리포트는 항상 생성됩니다.")
+    run.add_argument("--interactive", action="store_true", help="사용자 판단이 필요한 항목을 입력받습니다.")
+    run.add_argument("--report", action="store_true", help="처리 결과 리포트를 생성합니다.")
     run.add_argument("--review-only", action="store_true", help="메일 검토만 수행하고 Draft/스팸 DB 변경을 건너뜁니다.")
 
     review = subparsers.add_parser("review-gmail", help="실제 Gmail 메일을 읽어 검토 전용 리포트를 생성합니다.")
